@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Grade Calculator</string>
+    <string name="app_description">Student Grade Calculator Application</string>
+
+    <!-- Form Labels -->
+    <string name="student_name">Student Name</string>
+    <string name="student_name_hint">Enter student name</string>
+    <string name="course_name">Course Name</string>
+    <string name="course_name_hint">e.g., Mathematics</string>
+    <string name="ca_score">CA Score (0-40)</string>
+    <string name="ca_score_hint">0-40</string>
+    <string name="exam_score">Exam Score (0-60)</string>
+    <string name="exam_score_hint">0-60</string>
+    <string name="calculate_button">Calculate & Save</string>
+    <string name="calculating">Calculating...</string>
+
+    <!-- Results -->
+    <string name="course_results">Course Results</string>
+    <string name="total_score">Total Score</string>
+    <string name="grade">Grade</string>
+    <string name="gpa">GPA</string>
+    <string name="remark">Remark</string>
+    <string name="pass">PASS</string>
+    <string name="fail">FAIL</string>
+
+    <!-- Summary -->
+    <string name="academic_summary">Academic Summary</string>
+    <string name="total_courses">Courses</string>
+    <string name="overall_remark">Overall Remark</string>
+
+    <!-- Empty State -->
+    <string name="no_courses_added">No Courses Added Yet</string>
+    <string name="add_first_course">Add your first course to get started!</string>
+
+    <!-- Buttons -->
+    <string name="clear_all">Clear All Courses</string>
+    <string name="delete">Delete</string>
+    <string name="cancel">Cancel</string>
+    <string name="ok">OK</string>
+
+    <!-- Dialogs -->
+    <string name="error">Error</string>
+    <string name="delete_course">Delete Course</string>
+    <string name="delete_confirmation">Are you sure you want to delete this course?</string>
+
+    <!-- Error Messages -->
+    <string name="invalid_student_name">Please enter a valid student name</string>
+    <string name="invalid_course_name">Please enter a valid course name</string>
+    <string name="empty_scores">Please enter both CA and Exam scores</string>
+    <string name="invalid_ca_score">CA score must be between 0 and 40</string>
+    <string name="invalid_exam_score">Exam score must be between 0 and 60</string>
+    <string name="invalid_scores">Please enter valid numeric scores</string>
+</resources>
+
