@@ -1,41 +1,26 @@
 package com.example.gradecalculator.utils
 
 /**
- * Extension functions for commonly used operations
+ * Extension functions for commonly used operations.
+ * Demonstrates Kotlin extension functions (a functional programming feature).
  */
 
 /**
- * Safely parse string to double, returns null if parsing fails
- */
-fun String.toDoubleOrNull(): Double? {
-    return try {
-        this.toDouble()
-    } catch (e: NumberFormatException) {
-        null
-    }
-}
-
-/**
- * Format double to 2 decimal places
+ * Formats a Double to a string with the specified number of decimal places.
  */
 fun Double.toFormattedString(decimals: Int = 2): String {
     return String.format("%.${decimals}f", this)
 }
 
 /**
- * Check if string is a valid number
+ * Checks if a string represents a valid numeric value.
  */
 fun String.isValidNumber(): Boolean {
-    return try {
-        this.toDouble()
-        true
-    } catch (e: NumberFormatException) {
-        false
-    }
+    return this.toDoubleOrNull() != null
 }
 
 /**
- * Clamp a double value between min and max
+ * Clamps a Double value between min and max bounds.
  */
 fun Double.clamp(min: Double, max: Double): Double {
     return when {
@@ -46,7 +31,7 @@ fun Double.clamp(min: Double, max: Double): Double {
 }
 
 /**
- * Get ordinal suffix for numbers (1st, 2nd, 3rd, 4th, etc)
+ * Gets ordinal suffix for numbers (1st, 2nd, 3rd, 4th, etc).
  */
 fun Int.toOrdinal(): String {
     return when {
@@ -59,16 +44,8 @@ fun Int.toOrdinal(): String {
 }
 
 /**
- * Check if a list is empty with safe navigation
+ * Checks if a list is null or empty with safe navigation.
  */
 fun <T> List<T>?.isEmptyOrNull(): Boolean {
     return this == null || this.isEmpty()
 }
-
-/**
- * Get single element or null from list
- */
-fun <T> List<T>?.getOrNull(index: Int): T? {
-    return if (this != null && index in indices) this[index] else null
-}
-
