@@ -1,283 +1,311 @@
 package com.example.gradecalculator.viewmodel
 
+import android.content.Context
+import android.net.Uri
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.gradecalculator.data.repository.CourseRepository
-import com.example.gradecalculator.model.Course
-import com.example.gradecalculator.model.CourseResult
-import com.example.gradecalculator.model.StudentSummary
-import com.example.gradecalculator.utils.GradeCalculator
-import kotlinx.coroutines.flow.Flow
+import com.example.gradecalculator.model.Student
+import com.example.gradecalculator.service.ExcelService
+import com.example.gradecalculator.service.GradeCalculatorService
+import com.example.gradecalculator.service.PdfService
+import com.example.gradecalculator.service.StudentManager
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
- * ViewModel for managing grade calculation and course data
- * Handles all business logic and state management for the UI
+ * ViewModel managing the state and business logic of the Grade Calculator app.
+ *
+ * Demonstrates OOP composition: delegates work to service classes:
+ * - GradeCalculatorService (implements GradeCalculable interface)
+ * - StudentManager (implements StudentProcessor interface)
+ * - ExcelService (implements FileImportable + FileExportable interfaces)
+ * - PdfService (PDF report generation)
+ *
+ * Uses lambda expressions and higher-order functions for student processing.
  */
-class GradeViewModel(private val repository: CourseRepository) : ViewModel() {
+class GradeViewModel : ViewModel() {
 
-    // Form input state
+    // ── OOP Composition: Service Dependencies ──────────────────────────────────
+
+    private val gradeCalculator = GradeCalculatorService()
+    private val studentManager = StudentManager()
+    private val excelService = ExcelService()
+    private val pdfService = PdfService()
+
+    // ── UI State (Observable flows) ────────────────────────────────────────────
+
     private val _studentName = MutableStateFlow("")
     val studentName: StateFlow<String> = _studentName.asStateFlow()
-
-    private val _courseName = MutableStateFlow("")
-    val courseName: StateFlow<String> = _courseName.asStateFlow()
 
     private val _caScore = MutableStateFlow("")
     val caScore: StateFlow<String> = _caScore.asStateFlow()
 
-    private val _examScore = MutableStateFlow("")
-    val examScore: StateFlow<String> = _examScore.asStateFlow()
+    private val _testScore = MutableStateFlow("")
+    val testScore: StateFlow<String> = _testScore.asStateFlow()
 
-    // Current course result
-    private val _courseResult = MutableStateFlow<CourseResult?>(null)
-    val courseResult: StateFlow<CourseResult?> = _courseResult.asStateFlow()
+    private val _students = MutableStateFlow<List<Student>>(emptyList())
+    val students: StateFlow<List<Student>> = _students.asStateFlow()
 
-    // Error state
-    private val _errorMessage = MutableStateFlow<String?>(null)
-    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
-
-    // All courses as Flow
-    val allCourses: Flow<List<Course>> = repository.getAllCourses()
-
-    // Course results (calculated from courses)
-    val courseResults: Flow<List<CourseResult>> = allCourses.map { courses ->
-        courses.map { course ->
-            GradeCalculator.calculateCourseResult(
-                course.studentName,
-                course.courseName,
-                course.caScore,
-                course.examScore,
-                course.id
-            )
-        }
-    }
-
-    // Student summary (GPA and remark)
-    val studentSummary: Flow<StudentSummary?> = courseResults.map { results ->
-        if (results.isEmpty()) {
-            null
-        } else {
-            val studentName = results.firstOrNull()?.studentName ?: ""
-            val gradePoints = results.map { it.gradePoint }
-            val gpa = GradeCalculator.calculateGPA(gradePoints)
-            val overallRemark = GradeCalculator.getRemark(gpa)
-
-            StudentSummary(
-                studentName = studentName,
-                totalCourses = results.size,
-                gpa = gpa,
-                overallRemark = overallRemark
-            )
-        }
-    }
-
-    // Loading state
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
-    /**
-     * Updates student name input
-     */
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+
+    private val _successMessage = MutableStateFlow<String?>(null)
+    val successMessage: StateFlow<String?> = _successMessage.asStateFlow()
+
+    private val _gradesCalculated = MutableStateFlow(false)
+    val gradesCalculated: StateFlow<Boolean> = _gradesCalculated.asStateFlow()
+
+    // ── Form Input Handlers ────────────────────────────────────────────────────
+
     fun updateStudentName(name: String) {
         _studentName.value = name
-        clearError()
+        clearMessages()
     }
 
-    /**
-     * Updates course name input
-     */
-    fun updateCourseName(name: String) {
-        _courseName.value = name
-        clearError()
-    }
-
-    /**
-     * Updates CA score input
-     */
     fun updateCAScore(score: String) {
         _caScore.value = score
-        clearError()
+        clearMessages()
+    }
+
+    fun updateTestScore(score: String) {
+        _testScore.value = score
+        clearMessages()
+    }
+
+    // ── Student Management ─────────────────────────────────────────────────────
+
+    /**
+     * Adds a student from manual entry.
+     * Validates inputs, then auto-calculates total score.
+     */
+    fun addStudent() {
+        val name = _studentName.value.trim()
+        val ca = _caScore.value.toDoubleOrNull()
+        val test = _testScore.value.toDoubleOrNull()
+
+        // Validation using lambda-based validators in GradeCalculatorService
+        when {
+            !gradeCalculator.isValidStudentName(name) -> {
+                _errorMessage.value = "Please enter a valid student name"
+                return
+            }
+            ca == null || !gradeCalculator.isValidCAScore(ca) -> {
+                _errorMessage.value = "Please enter a valid CA score (0-100)"
+                return
+            }
+            test == null || !gradeCalculator.isValidTestScore(test) -> {
+                _errorMessage.value = "Please enter a valid Test score (0-100)"
+                return
+            }
+        }
+
+        val student = Student(
+            studentName = name,
+            caScore = ca!!,
+            testScore = test!!,
+            totalScore = gradeCalculator.calculateTotalScore(ca, test)
+        )
+
+        studentManager.addStudent(student)
+        _students.value = studentManager.getAllStudents()
+        _gradesCalculated.value = false
+
+        // Clear form fields
+        _studentName.value = ""
+        _caScore.value = ""
+        _testScore.value = ""
+        clearMessages()
+        _successMessage.value = "Student '${student.studentName}' added successfully"
     }
 
     /**
-     * Updates exam score input
+     * Removes a student by ID.
+     * Uses lambda expression in StudentManager.removeStudent.
      */
-    fun updateExamScore(score: String) {
-        _examScore.value = score
-        clearError()
+    fun removeStudent(id: String) {
+        studentManager.removeStudent(id)
+        _students.value = studentManager.getAllStudents()
+        if (_gradesCalculated.value && _students.value.isNotEmpty()) {
+            calculateGrades()
+        } else if (_students.value.isEmpty()) {
+            _gradesCalculated.value = false
+        }
+    }
+
+    /** Clears all students from the collection. */
+    fun clearAllStudents() {
+        studentManager.clearAll()
+        _students.value = emptyList()
+        _gradesCalculated.value = false
+        _successMessage.value = "All students cleared"
+    }
+
+    // ── Grade Calculation (Higher-Order Functions) ──────────────────────────────
+
+    /**
+     * Calculates grades for all students.
+     *
+     * Uses higher-order function: StudentManager.updateAll accepts a lambda
+     * that transforms each Student (processStudent from GradeCalculatorService).
+     *
+     * Internally, GradeCalculatorService uses the gradeMapper lambda to
+     * convert scores to letter grades via the GradeScale enum.
+     */
+    fun calculateGrades() {
+        if (studentManager.getAllStudents().isEmpty()) {
+            _errorMessage.value = "No students to calculate grades for"
+            return
+        }
+
+        // Higher-order function call: passing processStudent as a lambda to updateAll
+        val processedStudents = studentManager.updateAll { student ->
+            gradeCalculator.processStudent(student)
+        }
+
+        _students.value = processedStudents
+        _gradesCalculated.value = true
+        _successMessage.value = "Grades calculated for ${processedStudents.size} students"
+    }
+
+    // ── File Operations (Interface-based) ──────────────────────────────────────
+
+    /**
+     * Imports students from an Excel file.
+     * ExcelService implements the FileImportable interface.
+     */
+    fun importExcel(context: Context, uri: Uri) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            clearMessages()
+            try {
+                val importedStudents = withContext(Dispatchers.IO) {
+                    excelService.importStudents(context, uri)
+                }
+
+                if (importedStudents.isEmpty()) {
+                    _errorMessage.value = "No valid student data found in the Excel file"
+                } else {
+                    studentManager.replaceAll(importedStudents)
+                    _students.value = studentManager.getAllStudents()
+                    _gradesCalculated.value = false
+                    _successMessage.value = "${importedStudents.size} students imported successfully"
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = "Error importing Excel: ${e.message}"
+            } finally {
+                _isLoading.value = false
+            }
+        }
     }
 
     /**
-     * Clears error message
+     * Exports students to an Excel file with the Grade column.
+     * ExcelService implements the FileExportable interface.
      */
-    private fun clearError() {
+    fun exportExcel(context: Context, uri: Uri) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            clearMessages()
+            try {
+                val success = withContext(Dispatchers.IO) {
+                    excelService.exportStudents(context, _students.value, uri)
+                }
+                if (success) {
+                    _successMessage.value = "Excel file exported successfully"
+                } else {
+                    _errorMessage.value = "Failed to export Excel file"
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = "Error exporting Excel: ${e.message}"
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    /**
+     * Exports students to a PDF report.
+     * Uses PdfService for generation.
+     */
+    fun exportPdf(context: Context, uri: Uri) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            clearMessages()
+            try {
+                val success = withContext(Dispatchers.IO) {
+                    pdfService.generateReport(context, _students.value, uri)
+                }
+                if (success) {
+                    _successMessage.value = "PDF report generated successfully"
+                } else {
+                    _errorMessage.value = "Failed to generate PDF report"
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = "Error generating PDF: ${e.message}"
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    // ── Statistics (Higher-Order Functions) ─────────────────────────────────────
+
+    /**
+     * Higher-order function usage: Gets students filtered by a specific grade.
+     * Passes a lambda predicate to StudentManager.filterStudents.
+     */
+    fun getStudentsByGrade(grade: String): List<Student> {
+        return studentManager.filterStudents { it.grade == grade }
+    }
+
+    /**
+     * Higher-order function usage: Computes average score.
+     * Uses getStatistic with selector and aggregator lambdas.
+     */
+    fun getAverageScore(): Double {
+        return gradeCalculator.getStatistic(
+            students = _students.value,
+            selector = { it.totalScore },                                   // lambda: extract totalScore
+            aggregator = { scores -> if (scores.isEmpty()) 0.0 else scores.average() }  // lambda: compute average
+        )
+    }
+
+    /** Counts passing students using a lambda predicate. */
+    fun getPassingCount(): Int {
+        return gradeCalculator.countStudents(_students.value) { it.isPassing }
+    }
+
+    /** Counts failing students using a lambda predicate. */
+    fun getFailingCount(): Int {
+        return gradeCalculator.countStudents(_students.value) { it.grade == "F" }
+    }
+
+    /** Checks if the manual entry form has valid (non-blank) inputs. */
+    fun isFormValid(): Boolean {
+        return _studentName.value.isNotBlank() &&
+                _caScore.value.isNotBlank() &&
+                _testScore.value.isNotBlank()
+    }
+
+    // ── Message Helpers ────────────────────────────────────────────────────────
+
+    private fun clearMessages() {
+        _errorMessage.value = null
+        _successMessage.value = null
+    }
+
+    fun dismissError() {
         _errorMessage.value = null
     }
 
-    /**
-     * Sets error message
-     */
-    private fun setError(message: String) {
-        _errorMessage.value = message
-    }
-
-    /**
-     * Validates all inputs
-     * @return true if all inputs are valid
-     */
-    private fun validateInputs(): Boolean {
-        val studentName = _studentName.value
-        val courseName = _courseName.value
-        val caScore = _caScore.value
-        val examScore = _examScore.value
-
-        return when {
-            !GradeCalculator.isValidStudentName(studentName) -> {
-                setError("Please enter a valid student name")
-                false
-            }
-            !GradeCalculator.isValidCourseName(courseName) -> {
-                setError("Please enter a valid course name")
-                false
-            }
-            caScore.isEmpty() || examScore.isEmpty() -> {
-                setError("Please enter both CA and Exam scores")
-                false
-            }
-            else -> {
-                try {
-                    val ca = caScore.toDouble()
-                    val exam = examScore.toDouble()
-
-                    when {
-                        !GradeCalculator.isValidCAScore(ca) -> {
-                            setError("CA score must be between 0 and 40")
-                            false
-                        }
-                        !GradeCalculator.isValidExamScore(exam) -> {
-                            setError("Exam score must be between 0 and 60")
-                            false
-                        }
-                        else -> true
-                    }
-                } catch (e: NumberFormatException) {
-                    setError("Please enter valid numeric scores")
-                    false
-                }
-            }
-        }
-    }
-
-    /**
-     * Calculates and saves a new course result
-     */
-    fun calculateAndSaveCourse() {
-        if (!validateInputs()) return
-
-        viewModelScope.launch {
-            try {
-                _isLoading.value = true
-
-                val ca = _caScore.value.toDouble()
-                val exam = _examScore.value.toDouble()
-
-                val courseResult = GradeCalculator.calculateCourseResult(
-                    _studentName.value,
-                    _courseName.value,
-                    ca,
-                    exam,
-                    ""  // ID will be generated
-                )
-
-                _courseResult.value = courseResult
-
-                // Save to database
-                val course = Course(
-                    studentName = _studentName.value,
-                    courseName = _courseName.value,
-                    caScore = ca,
-                    examScore = exam
-                )
-
-                repository.insertCourse(course)
-
-                // Clear form after successful save
-                clearForm()
-
-                _isLoading.value = false
-            } catch (e: Exception) {
-                setError("Error: ${e.message}")
-                _isLoading.value = false
-            }
-        }
-    }
-
-    /**
-     * Clears the input form
-     */
-    fun clearForm() {
-        _studentName.value = ""
-        _courseName.value = ""
-        _caScore.value = ""
-        _examScore.value = ""
-        _courseResult.value = null
-        clearError()
-    }
-
-    /**
-     * Deletes a course
-     */
-    fun deleteCourse(course: Course) {
-        viewModelScope.launch {
-            try {
-                repository.deleteCourse(course)
-            } catch (e: Exception) {
-                setError("Error deleting course: ${e.message}")
-            }
-        }
-    }
-
-    /**
-     * Deletes all courses
-     */
-    fun deleteAllCourses() {
-        viewModelScope.launch {
-            try {
-                repository.deleteAllCourses()
-                clearForm()
-            } catch (e: Exception) {
-                setError("Error deleting courses: ${e.message}")
-            }
-        }
-    }
-
-    /**
-     * Checks if form is filled with valid data for calculation
-     */
-    fun isFormValid(): Boolean {
-        return _studentName.value.isNotBlank() &&
-                _courseName.value.isNotBlank() &&
-                _caScore.value.isNotBlank() &&
-                _examScore.value.isNotBlank()
+    fun dismissSuccess() {
+        _successMessage.value = null
     }
 }
-
-/**
- * ViewModelFactory for creating GradeViewModel instances with repository dependency
- */
-class GradeViewModelFactory(private val repository: CourseRepository) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(GradeViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return GradeViewModel(repository) as T
-        }
-        throw IllegalArgumentException("Unknown ViewModel class")
-    }
-}
-

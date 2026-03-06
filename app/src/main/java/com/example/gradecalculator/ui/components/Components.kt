@@ -5,12 +5,15 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -19,7 +22,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -29,25 +31,26 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.gradecalculator.model.CourseResult
-import com.example.gradecalculator.model.StudentSummary
+import com.example.gradecalculator.model.Student
+
+// ══════════════════════════════════════════════════════════════════════════════
+// StudentInputForm: Manual entry form for adding students
+// ══════════════════════════════════════════════════════════════════════════════
 
 /**
- * Composable for student input form
- * Allows users to enter student name, course name, CA score, and exam score
+ * Composable for the student manual entry form.
+ * Accepts input for Student Name, CA Score, and Test Score.
+ * Total Score is calculated automatically when the student is added.
  */
 @Composable
 fun StudentInputForm(
     studentName: String,
     onStudentNameChange: (String) -> Unit,
-    courseName: String,
-    onCourseNameChange: (String) -> Unit,
     caScore: String,
     onCAScoreChange: (String) -> Unit,
-    examScore: String,
-    onExamScoreChange: (String) -> Unit,
-    onCalculate: () -> Unit,
-    isLoading: Boolean,
+    testScore: String,
+    onTestScoreChange: (String) -> Unit,
+    onAddStudent: () -> Unit,
     isFormValid: Boolean,
     modifier: Modifier = Modifier
 ) {
@@ -66,7 +69,7 @@ fun StudentInputForm(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = "Add New Course",
+                text = "Add Student",
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
@@ -83,52 +86,62 @@ fun StudentInputForm(
                 shape = RoundedCornerShape(8.dp)
             )
 
-            // Course Name Input
-            OutlinedTextField(
-                value = courseName,
-                onValueChange = onCourseNameChange,
-                label = { Text("Course Name") },
-                placeholder = { Text("e.g., Mathematics") },
+            // Score inputs in a row
+            Row(
                 modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                shape = RoundedCornerShape(8.dp)
-            )
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // CA Score Input
+                OutlinedTextField(
+                    value = caScore,
+                    onValueChange = onCAScoreChange,
+                    label = { Text("CA Score") },
+                    placeholder = { Text("0-100") },
+                    modifier = Modifier.weight(1f),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    shape = RoundedCornerShape(8.dp)
+                )
 
-            // CA Score Input
-            OutlinedTextField(
-                value = caScore,
-                onValueChange = onCAScoreChange,
-                label = { Text("CA Score (0-40)") },
-                placeholder = { Text("0-40") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                keyboardType = KeyboardType.Number,
-                shape = RoundedCornerShape(8.dp)
-            )
+                // Test Score Input
+                OutlinedTextField(
+                    value = testScore,
+                    onValueChange = onTestScoreChange,
+                    label = { Text("Test Score") },
+                    placeholder = { Text("0-100") },
+                    modifier = Modifier.weight(1f),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    shape = RoundedCornerShape(8.dp)
+                )
+            }
 
-            // Exam Score Input
-            OutlinedTextField(
-                value = examScore,
-                onValueChange = onExamScoreChange,
-                label = { Text("Exam Score (0-60)") },
-                placeholder = { Text("0-60") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                keyboardType = KeyboardType.Number,
-                shape = RoundedCornerShape(8.dp)
-            )
+            // Auto-calculated total score preview
+            if (caScore.isNotBlank() && testScore.isNotBlank()) {
+                val ca = caScore.toDoubleOrNull() ?: 0.0
+                val test = testScore.toDoubleOrNull() ?: 0.0
+                Text(
+                    text = "Total Score (auto): ${String.format("%.1f", ca + test)}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(start = 4.dp)
+                )
+            }
 
-            // Calculate Button
+            // Add Student Button
             Button(
-                onClick = onCalculate,
-                enabled = !isLoading && isFormValid,
+                onClick = onAddStudent,
+                enabled = isFormValid,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 8.dp),
+                    .padding(top = 4.dp),
                 shape = RoundedCornerShape(8.dp)
             ) {
+                Icon(Icons.Default.Add, contentDescription = "Add")
+                Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = if (isLoading) "Calculating..." else "Calculate & Save",
+                    text = "Add Student",
                     modifier = Modifier.padding(8.dp),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
@@ -138,28 +151,42 @@ fun StudentInputForm(
     }
 }
 
+// ══════════════════════════════════════════════════════════════════════════════
+// StudentResultCard: Displays a single student's data and grade
+// ══════════════════════════════════════════════════════════════════════════════
+
 /**
- * Composable for displaying a single course result
- * Shows course name, scores, grade, and GPA
+ * Composable for displaying a single student result card.
+ * Shows name, scores, total, and grade (if calculated).
+ *
+ * @param student The Student data to display
+ * @param index Row number (1-based)
+ * @param onDelete Lambda callback when delete is pressed
  */
 @Composable
-fun CourseResultCard(
-    result: CourseResult,
+fun StudentResultCard(
+    student: Student,
+    index: Int,
     onDelete: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val gradeColor = when (result.grade) {
-        "A" -> Color(0xFF4CAF50) // Green
-        "B" -> Color(0xFF2196F3) // Blue
-        "C" -> Color(0xFFFFC107) // Amber
-        "D" -> Color(0xFFFF9800) // Orange
-        else -> Color(0xFFF44336)  // Red (F)
+    // Lambda expression: determine grade display color
+    val gradeColor: (String) -> Color = { grade ->
+        when (grade) {
+            "A" -> Color(0xFF4CAF50)
+            "B+" -> Color(0xFF2196F3)
+            "B" -> Color(0xFF03A9F4)
+            "C+", "C" -> Color(0xFFFFC107)
+            "D+", "D" -> Color(0xFFFF9800)
+            "F" -> Color(0xFFF44336)
+            else -> Color.Gray
+        }
     }
 
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(horizontal = 16.dp, vertical = 4.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
@@ -169,26 +196,18 @@ fun CourseResultCard(
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
-            // Header with delete button
+            // Header: Student name + delete button
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = result.courseName,
+                        text = "#$index  ${student.studentName}",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
-                    )
-                    Text(
-                        text = "Student: ${result.studentName}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
@@ -202,131 +221,96 @@ fun CourseResultCard(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = "Delete course",
+                        contentDescription = "Delete student",
                         tint = Color(0xFFF44336)
                     )
                 }
             }
 
-            // Scores section
+            // Score boxes row
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 12.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                ScoreBox(
-                    label = "CA",
-                    score = "${result.totalScore - 60}",
-                    modifier = Modifier.weight(1f)
-                )
-                ScoreBox(
-                    label = "Exam",
-                    score = "60",
-                    modifier = Modifier.weight(1f)
-                )
-                ScoreBox(
-                    label = "Total",
-                    score = "${result.totalScore.toInt()}",
-                    modifier = Modifier.weight(1f)
-                )
+                ScoreBox(label = "CA Score", score = String.format("%.1f", student.caScore), modifier = Modifier.weight(1f))
+                ScoreBox(label = "Test Score", score = String.format("%.1f", student.testScore), modifier = Modifier.weight(1f))
+                ScoreBox(label = "Total", score = String.format("%.1f", student.totalScore), modifier = Modifier.weight(1f))
             }
 
-            // Grade and GPA section
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 12.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                // Grade Box
-                Box(
+            // Grade display (only shown when grade is calculated)
+            if (student.grade.isNotEmpty()) {
+                Row(
                     modifier = Modifier
-                        .weight(1f)
-                        .background(
-                            color = gradeColor.copy(alpha = 0.1f),
-                            shape = RoundedCornerShape(8.dp)
-                        )
-                        .padding(12.dp),
-                    contentAlignment = Alignment.Center
+                        .fillMaxWidth()
+                        .padding(top = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
+                    // Grade Box
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .background(
+                                color = gradeColor(student.grade).copy(alpha = 0.1f),
+                                shape = RoundedCornerShape(8.dp)
+                            )
+                            .padding(12.dp),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = "Grade",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = gradeColor
-                        )
-                        Text(
-                            text = result.grade,
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = gradeColor
-                        )
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = "Grade",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = gradeColor(student.grade)
+                            )
+                            Text(
+                                text = student.grade,
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = gradeColor(student.grade)
+                            )
+                        }
                     }
-                }
 
-                // GPA Box
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .background(
-                            color = MaterialTheme.colorScheme.primaryContainer,
-                            shape = RoundedCornerShape(8.dp)
-                        )
-                        .padding(12.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
+                    // Pass/Fail Box
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .background(
+                                color = if (student.isPassing) Color(0xFFE8F5E9) else Color(0xFFFFEBEE),
+                                shape = RoundedCornerShape(8.dp)
+                            )
+                            .padding(12.dp),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = "GPA",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Text(
-                            text = String.format("%.2f", result.gradePoint),
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = "Status",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = if (student.isPassing) Color(0xFF2E7D32) else Color(0xFFC62828)
+                            )
+                            Text(
+                                text = if (student.isPassing) "PASS" else "FAIL",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = if (student.isPassing) Color(0xFF2E7D32) else Color(0xFFC62828)
+                            )
+                        }
                     }
-                }
-
-                // Remark Box
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .background(
-                            color = if (result.remark == "PASS")
-                                Color(0xFFE8F5E9)
-                            else
-                                Color(0xFFFFEBEE),
-                            shape = RoundedCornerShape(8.dp)
-                        )
-                        .padding(12.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = result.remark,
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = if (result.remark == "PASS")
-                            Color(0xFF2E7D32)
-                        else
-                            Color(0xFFC62828),
-                        textAlign = TextAlign.Center
-                    )
                 }
             }
         }
     }
 }
 
+// ══════════════════════════════════════════════════════════════════════════════
+// ScoreBox: Helper composable for displaying labeled score values
+// ══════════════════════════════════════════════════════════════════════════════
+
 /**
- * Helper composable for displaying score boxes
+ * A small box displaying a label and a score value.
+ * Reusable component used within StudentResultCard.
  */
 @Composable
 fun ScoreBox(
@@ -343,13 +327,12 @@ fun ScoreBox(
             .padding(8.dp),
         contentAlignment = Alignment.Center
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                textAlign = TextAlign.Center
             )
             Text(
                 text = score,
@@ -360,196 +343,3 @@ fun ScoreBox(
         }
     }
 }
-
-/**
- * Composable for displaying student GPA summary
- */
-@Composable
-fun StudentSummaryCard(
-    summary: StudentSummary,
-    modifier: Modifier = Modifier
-) {
-    val summaryColor = if (summary.overallRemark == "PASS")
-        Color(0xFF4CAF50)
-    else
-        Color(0xFFF44336)
-
-    Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = summaryColor.copy(alpha = 0.1f)
-        ),
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        border = androidx.compose.foundation.border(
-            width = 2.dp,
-            color = summaryColor,
-            shape = RoundedCornerShape(12.dp)
-        )
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text(
-                text = "Academic Summary",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
-            )
-
-            Text(
-                text = summary.studentName,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                SummaryStatItem(
-                    label = "Courses",
-                    value = summary.totalCourses.toString(),
-                    modifier = Modifier.weight(1f)
-                )
-
-                SummaryStatItem(
-                    label = "GPA",
-                    value = String.format("%.2f", summary.gpa),
-                    modifier = Modifier.weight(1f)
-                )
-
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .background(
-                            color = summaryColor.copy(alpha = 0.2f),
-                            shape = RoundedCornerShape(8.dp)
-                        )
-                        .padding(12.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = summary.overallRemark,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = summaryColor,
-                        textAlign = TextAlign.Center
-                    )
-                }
-            }
-        }
-    }
-}
-
-/**
- * Helper composable for summary statistics
- */
-@Composable
-fun SummaryStatItem(
-    label: String,
-    value: String,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier
-            .background(
-                color = MaterialTheme.colorScheme.primaryContainer,
-                shape = RoundedCornerShape(8.dp)
-            )
-            .padding(12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onPrimaryContainer
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
-        )
-    }
-}
-
-/**
- * Error dialog for displaying validation errors
- */
-@Composable
-fun ErrorDialog(
-    message: String,
-    onDismiss: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Text(
-                text = "Error",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
-            )
-        },
-        text = {
-            Text(
-                text = message,
-                style = MaterialTheme.typography.bodyMedium
-            )
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text("OK", style = MaterialTheme.typography.labelLarge)
-            }
-        },
-        shape = RoundedCornerShape(12.dp)
-    )
-}
-
-/**
- * Confirmation dialog for delete actions
- */
-@Composable
-fun DeleteConfirmDialog(
-    courseName: String,
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Text(
-                text = "Delete Course",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
-            )
-        },
-        text = {
-            Text(
-                text = "Are you sure you want to delete '$courseName'?",
-                style = MaterialTheme.typography.bodyMedium
-            )
-        },
-        confirmButton = {
-            TextButton(
-                onClick = onConfirm,
-                modifier = Modifier
-            ) {
-                Text("Delete", color = Color.Red)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        },
-        shape = RoundedCornerShape(12.dp)
-    )
-}
-
