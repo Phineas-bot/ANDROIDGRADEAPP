@@ -6,10 +6,10 @@
     <!-- Form Labels -->
     <string name="student_name">Student Name</string>
     <string name="student_name_hint">Enter student name</string>
-    <string name="ca_score">CA Score</string>
-    <string name="ca_score_hint">0-100</string>
-    <string name="test_score">Test Score</string>
-    <string name="test_score_hint">0-100</string>
+    <string name="ca_score">CA Score (0-40)</string>
+    <string name="ca_score_hint">0-40</string>
+    <string name="test_score">Test Score (0-60)</string>
+    <string name="test_score_hint">0-60</string>
     <string name="add_student">Add Student</string>
     <string name="calculate_grades">Calculate Grades</string>
 
@@ -45,8 +45,8 @@
 
     <!-- Error Messages -->
     <string name="invalid_student_name">Please enter a valid student name</string>
-    <string name="invalid_ca_score">Please enter a valid CA score (0-100)</string>
-    <string name="invalid_test_score">Please enter a valid Test score (0-100)</string>
+    <string name="invalid_ca_score">Please enter a valid CA score (0-40)</string>
+    <string name="invalid_test_score">Please enter a valid Test score (0-60)</string>
     <string name="invalid_scores">Please enter valid numeric scores</string>
     <string name="no_students_to_calculate">No students to calculate grades for</string>
 </resources>

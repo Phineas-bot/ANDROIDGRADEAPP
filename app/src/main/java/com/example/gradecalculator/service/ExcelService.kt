@@ -134,8 +134,14 @@ class ExcelService : FileImportable, FileExportable {
                 row.createCell(4).setCellValue(student.grade)
             }
 
-            // Auto-size all columns for readability
-            headers.indices.forEach { sheet.autoSizeColumn(it) }
+            // Set reasonable default column widths
+            // Note: autoSizeColumn() is not used because it relies on AWT fonts
+            // which are not available on Android
+            sheet.setColumnWidth(0, 6000)  // Student Name
+            sheet.setColumnWidth(1, 3000)  // CA Score
+            sheet.setColumnWidth(2, 3000)  // Test Score
+            sheet.setColumnWidth(3, 3500)  // Total Score
+            sheet.setColumnWidth(4, 2500)  // Grade
 
             // Write workbook to the output URI
             context.contentResolver.openOutputStream(uri)?.use { outputStream ->
