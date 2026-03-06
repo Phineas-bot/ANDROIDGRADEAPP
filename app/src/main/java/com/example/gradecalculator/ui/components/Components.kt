@@ -95,8 +95,8 @@ fun StudentInputForm(
                 OutlinedTextField(
                     value = caScore,
                     onValueChange = onCAScoreChange,
-                    label = { Text("CA Score") },
-                    placeholder = { Text("0-100") },
+                    label = { Text("CA Score (0-40)") },
+                    placeholder = { Text("0-40") },
                     modifier = Modifier.weight(1f),
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -107,8 +107,8 @@ fun StudentInputForm(
                 OutlinedTextField(
                     value = testScore,
                     onValueChange = onTestScoreChange,
-                    label = { Text("Test Score") },
-                    placeholder = { Text("0-100") },
+                    label = { Text("Test Score (0-60)") },
+                    placeholder = { Text("0-60") },
                     modifier = Modifier.weight(1f),
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),

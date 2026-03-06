@@ -97,11 +97,11 @@ class GradeViewModel : ViewModel() {
                 return
             }
             ca == null || !gradeCalculator.isValidCAScore(ca) -> {
-                _errorMessage.value = "Please enter a valid CA score (0-100)"
+                _errorMessage.value = "Please enter a valid CA score (0-40)"
                 return
             }
             test == null || !gradeCalculator.isValidTestScore(test) -> {
-                _errorMessage.value = "Please enter a valid Test score (0-100)"
+                _errorMessage.value = "Please enter a valid Test score (0-60)"
                 return
             }
         }

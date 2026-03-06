@@ -15,6 +15,8 @@ object Constants {
     const val GRADE_D_MIN = 40.0
     const val MAX_SCORE = 100.0
     const val MIN_SCORE = 0.0
+    const val MAX_CA_SCORE = 40.0
+    const val MAX_TEST_SCORE = 60.0
 
     // ── Excel Column Headers ───────────────────────────────────────────────────
     const val COL_STUDENT_NAME = "Student Name"

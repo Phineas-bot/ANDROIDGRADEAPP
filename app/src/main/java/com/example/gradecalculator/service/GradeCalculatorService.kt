@@ -70,11 +70,11 @@ class GradeCalculatorService : GradeCalculable {
 
     // ── Validation Methods (using lambdas) ─────────────────────────────────────
 
-    /** Validates CA score is in 0-100 range using the rangeValidator lambda. */
-    fun isValidCAScore(score: Double): Boolean = rangeValidator(score, 0.0, 100.0)
+    /** Validates CA score is in 0-40 range using the rangeValidator lambda. */
+    fun isValidCAScore(score: Double): Boolean = rangeValidator(score, 0.0, 40.0)
 
-    /** Validates Test score is in 0-100 range using the rangeValidator lambda. */
-    fun isValidTestScore(score: Double): Boolean = rangeValidator(score, 0.0, 100.0)
+    /** Validates Test score is in 0-60 range using the rangeValidator lambda. */
+    fun isValidTestScore(score: Double): Boolean = rangeValidator(score, 0.0, 60.0)
 
     /** Validates student name is not blank. */
     fun isValidStudentName(name: String): Boolean = name.isNotBlank()
