@@ -1,45 +1,42 @@
-# ⚡ ULTRA QUICK START (2 MINUTES)
+# Start Here
 
-## You have 2 minutes? Do this:
+This is the fastest way to open and test the app.
 
-### Step 1: Open (30 seconds)
-1. Open **Android Studio**
-2. Click **File → Open**
-3. Select **ANDROIDGRADEAPP** folder
-4. Click **OK**
+## 1. Open the project
 
-### Step 2: Wait (30 seconds)
-- Let Gradle sync (bottom status bar)
-- Should say "Gradle Sync Successful"
+1. Open Android Studio
+2. Choose **File > Open**
+3. Select the `ANDROIDGRADEAPP` folder
+4. Wait for Gradle sync
 
-### Step 3: Run (30 seconds)
-1. Connect device or start emulator
-2. Click **Run** button (green play icon)
-3. Select your device
-4. Click **OK**
+## 2. Run the app
 
-### Step 4: Try (30 seconds)
-App should open. Now:
-1. Type **Student Name**: "John Doe"
-2. Type **Course Name**: "Math"
-3. Type **CA Score**: 35
-4. Type **Exam Score**: 50
-5. Click **Calculate & Save**
+1. Start an emulator or connect an Android phone
+2. Click the Run button
+3. Choose the device
 
-🎉 **Done!** You should see:
-- Grade: **A**
-- GPA: **4.0**
-- Remark: **PASS** ✅
+## 3. Try a quick test
 
----
+Use these sample values:
+- Student name: `John`
+- CA score: `35`
+- Test score: `50`
 
-## Want More Details?
+Then:
+1. Tap **Add Student**
+2. Tap **Calculate Grades**
 
-→ Read **QUICK_START.md** (10 min read)  
-→ Read **EXECUTIVE_SUMMARY.md** (5 min read)  
-→ Read **README.md** (25 min read)
+Expected result:
+- Total score = 85
+- Grade = A
 
----
+## 4. Optional file actions
 
-**That's it! App is running.** 🚀
+- Import from Excel
+- Export to Excel
+- Export to PDF
 
+If you want more detail, read these next:
+- [README.md](README.md)
+- [ARCHITECTURE_GUIDE.md](ARCHITECTURE_GUIDE.md)
+- [TECHNICAL_SPECIFICATIONS.md](TECHNICAL_SPECIFICATIONS.md)
