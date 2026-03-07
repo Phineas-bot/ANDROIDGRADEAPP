@@ -8,6 +8,14 @@ It is a simple Android grade calculator made with Kotlin and Jetpack Compose.
 
 No. The current version keeps student data in memory while the app is open.
 
+## So how is persistence managed?
+
+It is managed in two ways:
+- short-term session state through `GradeViewModel` and `StudentManager`,
+- long-term manual storage through Excel export and later Excel import.
+
+So the app has session state, but not automatic permanent local persistence.
+
 ## What scores can be entered?
 
 - CA: 0 to 40
@@ -24,6 +32,12 @@ Yes. It can read student data from an Excel file.
 ## Can the app export files?
 
 Yes. It can export to Excel and PDF.
+
+## Will my data still be there after reopening the app?
+
+Not automatically.
+
+If the app is fully closed and reopened, the in-memory student list is lost unless the data was exported before and later imported again.
 
 ## Where is the grading logic?
 

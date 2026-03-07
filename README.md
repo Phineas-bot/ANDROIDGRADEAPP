@@ -4,7 +4,7 @@ This repository contains a simple Android class project for calculating student 
 
 ## Documentation kept in this repo
 
- the five documentation files are :
+The five documentation files are:
 
 1. `README.md`
 2. `START_HERE.md`
@@ -79,5 +79,8 @@ For the fastest setup steps, read [START_HERE.md](START_HERE.md).
 
 - This version does not use a local database.
 - Student records are kept in memory while the app is open.
-- Files can still be saved by exporting to Excel or PDF.
+- The current list is managed by `StudentManager` and exposed through `GradeViewModel`.
+- The list may survive simple UI events such as screen rotation because the `ViewModel` keeps the current state.
+- The list is not automatically restored after the app is fully closed or the process is killed.
+- Long-term persistence is manual: the user must export to Excel or PDF and later re-import Excel if needed.
 - The `homework/` folder is not part of the Android app.

@@ -105,3 +105,10 @@ The code shows several Kotlin ideas clearly:
 
 There is no Room database in the current version.
 The student list is stored in memory while the app is open.
+
+More precisely:
+- `StudentManager` holds the list in a mutable in-memory collection.
+- `GradeViewModel` exposes that list to the UI with `StateFlow`.
+- This gives session-level state management, not true persistent storage.
+- If the app is fully closed or the process is removed, the in-memory list is lost.
+- The only long-term storage in the current app is through file export and later Excel import.

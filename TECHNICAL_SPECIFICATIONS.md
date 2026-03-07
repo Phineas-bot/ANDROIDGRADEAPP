@@ -70,3 +70,11 @@ The app creates a simple PDF table with:
 
 - Data is not stored in a database in the current version.
 - Results remain only for the current session unless exported.
+
+## Persistence details
+
+- Session state is kept in `GradeViewModel`.
+- Student data is stored in memory by `StudentManager`.
+- There is no automatic save to Room, SQLite, SharedPreferences, or DataStore.
+- If the app is closed and reopened, the student list is not automatically restored.
+- To keep data beyond the current session, the user must export it.
